@@ -7,6 +7,7 @@ import (
 
 	"github.com/ethan-stone/gin-todo/db"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -21,13 +22,23 @@ func PostTodo(c *gin.Context) {
 		return
 	}
 
-	todo, err := db.InsertTodo(&db.Todo{Description: body.Description})
+	todo := db.Todo{Description: body.Description}
 
-	if err != nil {
+	result := db.DB.Create(&todo)
+
+	if result.Error != nil {
+		log.WithFields(log.Fields{
+			"resource": "todos",
+		}).Error(result.Error)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
 	}
 
+	log.WithFields(log.Fields{
+		"resource": "todos",
+		"todo_id": todo.ID,
+	}).Infof("Todo with ID: %v created", todo.ID)
+	
 	c.JSON(http.StatusOK, gin.H{"data": todo})
 	return
 }
