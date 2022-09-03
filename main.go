@@ -4,6 +4,7 @@ import (
 	"github.com/ethan-stone/gin-todo/db"
 	"github.com/ethan-stone/gin-todo/router"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 )
 
 
@@ -14,6 +15,7 @@ func ping(c *gin.Context) {
 }
 
 func main() {
+	log.SetFormatter(&log.JSONFormatter{})
 	db.Connect()	
 
 	r := gin.Default()

@@ -1,10 +1,12 @@
 package router
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/ethan-stone/gin-todo/db"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type PostTodoInput struct {
@@ -45,6 +47,10 @@ func PatchTodo(c *gin.Context) {
 	todo, err := db.RetrieveTodo(id)
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
 	}
@@ -67,6 +73,10 @@ func GetTodo(c *gin.Context) {
 	todo, err := db.RetrieveTodo(id)
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
 	}
