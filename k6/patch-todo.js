@@ -21,9 +21,16 @@ export const options = {
   }
 };
 
-export default function () {
-  const res = http.post(
-    "http://localhost:8080/todo",
+export function setup() {
+  const res = http.get(`http://localhost:8080/todo?skip=0&limit=100`);
+  return { todosRes: res.json() };
+}
+
+export default function (data) {
+  const todos = data.todosRes.data;
+  const todo = todos[Math.floor(Math.random() * todos.length)];
+  const res = http.patch(
+    `http://localhost:8080/todo/${todo.id}`,
     JSON.stringify({
       description: `Todo: ${Math.round(Math.random() * 1000000)}`
     }),
