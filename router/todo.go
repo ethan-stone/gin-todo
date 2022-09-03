@@ -3,6 +3,7 @@ package router
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/ethan-stone/gin-todo/db"
 	"github.com/gin-gonic/gin"
@@ -82,5 +83,46 @@ func GetTodo(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": todo})
+	return
+}
+
+func GetTodos(c *gin.Context) {
+	skipQuery := c.Query("skip")
+	limitQuery := c.Query("limit")
+
+	var skip int
+
+	if skipQuery == "" {
+		skip = 0
+	} else {
+		skipParse, skipParseErr := strconv.Atoi(skipQuery)
+		if skipParseErr != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": skipParseErr.Error()})
+			return
+		}
+		skip = skipParse
+	}
+
+	var limit int
+
+	if limitQuery == "" {
+		limit = 50 
+	} else {
+		limitParse, limitParseErr := strconv.Atoi(limitQuery)
+		if limitParseErr != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": limitParseErr.Error()})
+			return
+		}
+		limit =limitParse 
+	}
+
+	todos, err := db.ListTodos(&db.Todo{}, skip, limit)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
+	
+	c.JSON(http.StatusOK, gin.H{"data": todos})
 	return
 }

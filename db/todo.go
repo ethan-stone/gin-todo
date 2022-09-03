@@ -71,3 +71,24 @@ func RetrieveTodo(id string) (*Todo, error) {
 
 	return &todo, nil 
 }
+
+func ListTodos(filter *Todo, skip int, limit int) ([]Todo, error) {
+	var todos []Todo
+
+	result := DB.Where(filter).Limit(limit).Offset(skip).Find(&todos)
+
+	if result.Error != nil {
+		log.WithFields(log.Fields{
+			"resource": "todos",
+			"filter": filter,
+		}).Error(result.Error)
+		return nil, result.Error
+	}
+
+	log.WithFields(log.Fields{
+		"resource": "todos",
+		"filter": filter,
+	}).Infof("Todos retrieved")
+
+	return todos, nil
+}

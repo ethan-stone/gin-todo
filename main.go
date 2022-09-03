@@ -22,6 +22,7 @@ func main() {
 	r.GET("/ping", ping)
 	r.POST("/todo", router.PostTodo)
 	r.GET("/todo/:id", router.GetTodo)
+	r.GET("/todo", router.GetTodos)
 	r.PATCH("/todo/:id", router.PatchTodo)
 	r.Run() // listen and serve on 0.0.0.0:8080
 }
