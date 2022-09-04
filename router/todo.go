@@ -20,10 +20,7 @@ func PostTodo(c *gin.Context) {
 	var body PostTodoInput
 
 	if err := c.ShouldBindJSON(&body); err != nil {
-		log.WithFields(log.Fields{
-			"resource": "todos",
-			"todo_id": nil,
-		}).Error(err)
+		log.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -32,18 +29,12 @@ func PostTodo(c *gin.Context) {
 	result := db.DB.Create(&todo)
 
 	if result.Error != nil {
-		log.WithFields(log.Fields{
-			"resource": "todos",
-			"todo_id": nil, 
-		}).Error(result.Error)
+		log.Error(result.Error)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
 	}
 
-	log.WithFields(log.Fields{
-		"resource": "todos",
-		"todo_id": todo.ID,
-	}).Infof("Todo with ID: %v created", todo.ID)
+	log.Infof("Todo with ID: %v created", todo.ID)
 	c.JSON(http.StatusOK, gin.H{"data": todo})
 	return
 }
@@ -58,10 +49,7 @@ func PatchTodo(c *gin.Context) {
 	var body PatchTodoInput 
 
 	if err := c.ShouldBindJSON(&body); err != nil {
-		log.WithFields(log.Fields{
-			"resource": "todos",
-			"todo_id": id,
-		}).Error(err)
+		log.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -70,10 +58,7 @@ func PatchTodo(c *gin.Context) {
 	findResult := db.DB.First(&todo)
 
 	if findResult.Error != nil {
-		log.WithFields(log.Fields{
-			"resource": "todos",
-			"todo_id": id,
-		}).Error(findResult.Error)
+		log.Error(findResult.Error)
 		if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
 			return
@@ -85,20 +70,12 @@ func PatchTodo(c *gin.Context) {
 	updateResult := db.DB.Model(&todo).Updates(&db.Todo{Description: body.Description})
 
 	if updateResult.Error != nil {
-		log.WithFields(log.Fields{
-			"resource": "todos",
-			"todo_id": id,
-		}).Error(updateResult.Error)
+		log.Error(updateResult.Error)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
 	}
 
-	log.WithFields(log.Fields{
-		"resource": "todos",
-		"todo_id": todo.ID,
-		"updates": body,
-	}).Infof("Todo with ID: %v updated", id)
-
+	log.Infof("Todo with ID: %v updated", id)
 	c.JSON(http.StatusOK, gin.H{"data": todo})
 	return
 }
@@ -110,10 +87,7 @@ func GetTodo(c *gin.Context) {
 	result := db.DB.First(&todo)
 
 	if result.Error != nil {
-		log.WithFields(log.Fields{
-			"resource": "todos",
-			"todo_id": id,
-		}).Error(result.Error)
+		log.Error(result.Error)
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
 			return
@@ -122,10 +96,7 @@ func GetTodo(c *gin.Context) {
 		return
 	}
 
-	log.WithFields(log.Fields{
-		"resource": "todos",
-		"todo_id": id,
-	}).Infof("Todo with ID: %v retrieved", id)
+	log.Infof("Todo with ID: %v retrieved", id)
 	c.JSON(http.StatusOK, gin.H{"data": todo})
 	return
 }
@@ -141,6 +112,7 @@ func GetTodos(c *gin.Context) {
 	} else {
 		skipParse, skipParseErr := strconv.Atoi(skipQuery)
 		if skipParseErr != nil {
+			log.Error(skipParseErr)
 			c.JSON(http.StatusBadRequest, gin.H{"error": skipParseErr.Error()})
 			return
 		}
@@ -154,19 +126,24 @@ func GetTodos(c *gin.Context) {
 	} else {
 		limitParse, limitParseErr := strconv.Atoi(limitQuery)
 		if limitParseErr != nil {
+			log.Error(limitParseErr)
 			c.JSON(http.StatusBadRequest, gin.H{"error": limitParseErr.Error()})
 			return
 		}
 		limit =limitParse 
 	}
 
-	todos, err := db.ListTodos(&db.Todo{}, skip, limit)
+	var todos []db.Todo
 
-	if err != nil {
+	result := db.DB.Limit(limit).Offset(skip).Find(&todos)
+
+	if result.Error != nil {
+		log.Error(result.Error)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
 	}
 	
+	log.Infof("Todos retrieved")
 	c.JSON(http.StatusOK, gin.H{"data": todos})
 	return
 }
