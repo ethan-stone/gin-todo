@@ -14,25 +14,6 @@ type Todo struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func UpdateTodo(id string, updates *Todo) (*Todo, error) {
-  todo := Todo{ID: uuid.MustParse(id)}
-	result := DB.Model(&todo).Updates(updates)
-
-	if result.Error != nil {
-		log.WithFields(log.Fields{
-			"resource": "todos",
-			"todo_id": todo.ID,
-		}).Error(result.Error)
-		return nil, result.Error
-	}
-
-	log.WithFields(log.Fields{
-		"resource": "todos",
-		"todo_id": todo.ID,
-	}).Infof("Todo with ID: %v updated", todo.ID)
-	return &todo, nil
-}
-
 func RetrieveTodo(id string) (*Todo, error) {
 	todo := Todo{ID: uuid.MustParse(id)}
 	result := DB.First(&todo)
