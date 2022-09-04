@@ -1,9 +1,12 @@
 import "../styles/globals.css";
 import type { AppProps } from "next/app";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { supabase } from "../utils/supabaseClient";
 import { AuthChangeEvent, Session } from "@supabase/supabase-js";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
 
 function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
@@ -34,7 +37,11 @@ function MyApp({ Component, pageProps }: AppProps) {
     };
   }, [router]);
 
-  return <Component {...pageProps} />;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Component {...pageProps} />;
+    </QueryClientProvider>
+  );
 }
 
 export default MyApp;
