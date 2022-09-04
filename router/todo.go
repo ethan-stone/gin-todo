@@ -106,10 +106,15 @@ func PatchTodo(c *gin.Context) {
 func GetTodo(c *gin.Context) {
 	id := c.Param("id")
 
-	todo, err := db.RetrieveTodo(id)
+	todo := db.Todo{ID: uuid.MustParse(id)}
+	result := db.DB.First(&todo)
 
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	if result.Error != nil {
+		log.WithFields(log.Fields{
+			"resource": "todos",
+			"todo_id": id,
+		}).Error(result.Error)
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
 			return
 		}
@@ -117,6 +122,10 @@ func GetTodo(c *gin.Context) {
 		return
 	}
 
+	log.WithFields(log.Fields{
+		"resource": "todos",
+		"todo_id": id,
+	}).Infof("Todo with ID: %v retrieved", id)
 	c.JSON(http.StatusOK, gin.H{"data": todo})
 	return
 }
