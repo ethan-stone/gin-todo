@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ethan-stone/gin-todo/db"
+	"github.com/ethan-stone/gin-todo/middleware"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 )
@@ -13,6 +14,12 @@ type CreateTodoInput struct {
 }
 
 func Create(c *gin.Context) {
+	claims := c.MustGet("Claims").(*middleware.Claims)
+
+	log.WithFields(log.Fields{
+		"claims": claims,
+	}).Info("User")
+
 	var body CreateTodoInput 
 
 	if err := c.ShouldBindJSON(&body); err != nil {

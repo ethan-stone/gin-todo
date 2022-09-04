@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/ethan-stone/gin-todo/db"
+	"github.com/ethan-stone/gin-todo/middleware"
 	"github.com/ethan-stone/gin-todo/router/todo"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -19,6 +20,10 @@ func main() {
 	db.Connect()	
 
 	r := gin.Default()
+
+	r.Use(middleware.CORS())
+	r.Use(middleware.SupabaseAuth())
+
 	r.GET("/ping", ping)
 	r.POST("/todo", todo.Create)
 	r.GET("/todo/:id", todo.Get)
