@@ -2,12 +2,11 @@ package todo
 
 import (
 	"errors"
-	"net/http"
 
-	"github.com/ethan-stone/gin-todo/db"
-	"github.com/gin-gonic/gin"
+	"github.com/ethan-stone/go-todo/db"
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -15,41 +14,44 @@ type UpdateTodoInput struct {
 	Description string `json:"description"`
 }
 
-func Update(c *gin.Context) {
-	id := c.Param("id")
+func Update(c *fiber.Ctx) error {
+	id := c.Params("id")
 
-	var body UpdateTodoInput 
+	body := new(UpdateTodoInput)
 
-	if err := c.ShouldBindJSON(&body); err != nil {
-		log.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	if err := c.BodyParser(&body); err != nil {
+		log.Error().Msg(err.Error())
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
 	todo := db.Todo{ID: uuid.MustParse(id)}
 	findResult := db.DB.First(&todo)
 
 	if findResult.Error != nil {
-		log.Error(findResult.Error)
+		log.Error().Msg(findResult.Error.Error())
 		if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
-			return
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "Todo not found",
+			})
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Internal Server Error",
+		})
 	}
 
 	updateResult := db.DB.Model(&todo).Updates(&db.Todo{Description: body.Description})
 
 	if updateResult.Error != nil {
-		log.Error(updateResult.Error)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-		return
+		log.Error().Msg(updateResult.Error.Error())
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Internal Server Error",
+		})
 	}
 
-	log.Infof("Todo with ID: %v updated", id)
-	c.JSON(http.StatusOK, gin.H{"data": todo})
-	return
+	log.Info().Msgf("Todo with ID: %v updated", id)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": todo,
+	})
 }
-
-

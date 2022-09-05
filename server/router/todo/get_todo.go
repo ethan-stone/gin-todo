@@ -2,33 +2,35 @@ package todo
 
 import (
 	"errors"
-	"net/http"
 
-	"github.com/ethan-stone/gin-todo/db"
-	"github.com/gin-gonic/gin"
+	"github.com/ethan-stone/go-todo/db"
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
+
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
-func Get(c *gin.Context) {
-	id := c.Param("id")
+func Get(c *fiber.Ctx) error {
+	id := c.Params("id")
 
 	todo := db.Todo{ID: uuid.MustParse(id)}
 	result := db.DB.First(&todo)
 
 	if result.Error != nil {
-		log.Error(result.Error)
+		log.Error().Msg(result.Error.Error())
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
-			return
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "Todo not found",
+			})
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Internal Server Error",
+		})
 	}
 
-	log.Infof("Todo with ID: %v retrieved", id)
-	c.JSON(http.StatusOK, gin.H{"data": todo})
-	return
+	log.Info().Msgf("Todo with ID: %v retrieved", id)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": todo,
+	})
 }
-

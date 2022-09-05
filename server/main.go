@@ -1,33 +1,37 @@
 package main
 
 import (
-	"github.com/ethan-stone/gin-todo/db"
-	"github.com/ethan-stone/gin-todo/middleware"
-	"github.com/ethan-stone/gin-todo/router/todo"
-	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
+	"github.com/ethan-stone/go-todo/db"
+	"github.com/ethan-stone/go-todo/middleware/logger"
+	"github.com/ethan-stone/go-todo/middleware/supabaseauth"
+	"github.com/ethan-stone/go-todo/router/todo"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
-
-func ping(c *gin.Context) {
-	c.JSON(200, gin.H{
+func ping(c *fiber.Ctx) error {
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "pong",
 	})
 }
 
 func main() {
-	log.SetFormatter(&log.JSONFormatter{})
-	db.Connect()	
+	db.Connect()
 
-	r := gin.Default()
+	app := fiber.New()
 
-	r.Use(middleware.CORS())
-	r.Use(middleware.SupabaseAuth())
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "*",
+		AllowCredentials: true,
+		AllowHeaders:     "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With",
+	}))
+	app.Use(logger.New())
+	app.Use(supabaseauth.New())
 
-	r.GET("/ping", ping)
-	r.POST("/todo", todo.Create)
-	r.GET("/todo/:id", todo.Get)
-	r.GET("/todo", todo.List)
-	r.PATCH("/todo/:id", todo.Update)
-	r.Run() // listen and serve on 0.0.0.0:8080
+	app.Get("/ping", ping)
+	app.Post("/todo", todo.Create)
+	app.Get("/todo/:id", todo.Get)
+	app.Get("/todo", todo.List)
+	app.Patch("/todo/:id", todo.Update)
+	app.Listen(":8080")
 }

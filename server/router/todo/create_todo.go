@@ -1,44 +1,41 @@
 package todo
 
 import (
-	"net/http"
-
-	"github.com/ethan-stone/gin-todo/db"
-	"github.com/ethan-stone/gin-todo/middleware"
-	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
+	"github.com/ethan-stone/go-todo/db"
+	"github.com/gofiber/fiber/v2"
+	"github.com/rs/zerolog/log"
 )
 
 type CreateTodoInput struct {
 	Description string `json:"description" binding:"required"`
 }
 
-func Create(c *gin.Context) {
-	claims := c.MustGet("Claims").(*middleware.Claims)
+func Create(c *fiber.Ctx) error {
+	// claims := c.Locals("Claims").(*supabaseauth.Claims)
 
-	log.WithFields(log.Fields{
-		"claims": claims,
-	}).Info("User")
+	// log.Info().Interface("claims", claims).Msg("Claims")
 
-	var body CreateTodoInput 
+	body := new(CreateTodoInput)
 
-	if err := c.ShouldBindJSON(&body); err != nil {
-		log.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	if err := c.BodyParser(body); err != nil {
+		log.Error().Msg(err.Error())
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
 	todo := db.Todo{Description: body.Description}
 	result := db.DB.Create(&todo)
 
 	if result.Error != nil {
-		log.Error(result.Error)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-		return
+		log.Error().Msg(result.Error.Error())
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Internal Server Error",
+		})
 	}
 
-	log.Infof("Todo with ID: %v created", todo.ID)
-	c.JSON(http.StatusOK, gin.H{"data": todo})
-	return
+	log.Info().Msgf("Todo with ID: %v created", todo.ID)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": todo,
+	})
 }
-
