@@ -46,7 +46,7 @@ export default function Profile(props: Props) {
   }
 
   return (
-    <div style={{ maxWidth: "420px", margin: "96px auto" }}>
+    <div className="min-h-screen flex flex-col items-center justify-center">
       <h2>Hello, {user.email}</h2>
       <p>User ID: {user.id}</p>
       <button onClick={signOut}>Sign Out</button>
