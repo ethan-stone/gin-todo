@@ -11,10 +11,6 @@ type CreateTodoInput struct {
 }
 
 func Create(c *fiber.Ctx) error {
-	// claims := c.Locals("Claims").(*supabaseauth.Claims)
-
-	// log.Info().Interface("claims", claims).Msg("Claims")
-
 	body := new(CreateTodoInput)
 
 	if err := c.BodyParser(body); err != nil {

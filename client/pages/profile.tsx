@@ -10,6 +10,7 @@ type Props = {
 
 export default function Profile(props: Props) {
   const session = supabase.auth.session() as Session;
+  console.log(session.access_token);
 
   const { isLoading, mutate } = useMutation(
     ["create-todo"],
@@ -20,6 +21,7 @@ export default function Profile(props: Props) {
           description: data.description
         }),
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`
         }
       });

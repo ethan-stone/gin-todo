@@ -1,15 +1,16 @@
 import http from "k6/http";
 import { check, sleep } from "k6";
+import { encode } from "./jwt.js";
 
 export const options = {
   stages: [
     {
       duration: "5s",
-      target: 100
+      target: 50
     },
     {
       duration: "10s",
-      target: 100
+      target: 50
     },
     {
       duration: "5s",
@@ -21,9 +22,22 @@ export const options = {
   }
 };
 
+const userId = __ENV.USER_ID;
+const jwtSecret = __ENV.SUPABASE_JWT_SECRET;
+
 export function setup() {
-  const res = http.get(`http://localhost:8080/todo?skip=0&limit=100`);
-  return { todosRes: res.json() };
+  const payload = {
+    exp: Math.floor(new Date().getTime() / 1000 + 30 * 60),
+    sub: userId
+  };
+  const jwt = encode(payload, jwtSecret, "HS256");
+  const authHeader = `Bearer ${jwt}`;
+  const res = http.get(`http://localhost:8080/todo?skip=0&limit=100`, {
+    headers: {
+      Authorization: authHeader
+    }
+  });
+  return { todosRes: res.json(), authHeader };
 }
 
 export default function (data) {
@@ -36,7 +50,8 @@ export default function (data) {
     }),
     {
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        Authorization: data.authHeader
       }
     }
   );
